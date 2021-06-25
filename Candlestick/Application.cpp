@@ -7,14 +7,12 @@
 #include <vector>
 #include <array>
 #include <unordered_map>
+#include "GV.h"
 
 #define WIDTH 1920
 #define HEIGHT 1080
 
 #define VERBOSE 1
-
-double scale = 3;
-double panx, pany;
 
 struct Candlestick {
 	double high, low, open, close;
@@ -28,8 +26,10 @@ struct Candlestick {
 		else if(open < close) {
 			SDL_SetRenderDrawColor(r, 0, 255, 0, 255);
 		}
-		SDL_RenderDrawLine(r, x + panx, HEIGHT-high*scale*3 + pany, x + panx, HEIGHT-low*scale*3 + pany);
-		SDL_Rect candle = { x-candle_width/2 + panx, HEIGHT-open*scale*3 + pany, candle_width, (open-close)*scale*2 };
+
+
+		SDL_RenderDrawLine(r, x + GV::panx, HEIGHT-high*GV::scale*3 + GV::pany, x + GV::panx, HEIGHT-low*GV::scale*3 + GV::pany);
+		SDL_Rect candle = { x-candle_width/2 + GV::panx, HEIGHT-open*GV::scale*3 + GV::pany, candle_width, (open-close)*GV::scale*2 };
 		SDL_RenderFillRect(r, &candle);
 	}
 
@@ -43,7 +43,7 @@ private:
 
 	std::string quote;
 
-	bool RENDER_GRID = true;
+	bool RENDER_GRID = false;
 
 	constexpr static uint32_t MAX_DATA = 65000;
 
@@ -106,7 +106,8 @@ public:
 		for (auto& e : price_data) {
 			double x = 0;
 			for (auto it = e.second.cbegin(); it != e.second.cend(); it++) {
-				Candlestick cs(it->at(0), it->at(1), it->at(2), it->at(3), x, scale*2);
+
+				Candlestick cs(it->at(0), it->at(1), it->at(2), it->at(3), x, GV::scale*2);
 				cs.Render(r);
 				x += WIDTH / e.second.size();
 			}
@@ -140,26 +141,26 @@ public:
 				case SDL_MOUSEWHEEL: {
 					if (e.wheel.y > 0) {
 						if (zoom == 1) {
-							scale += 0.05;
+							GV::scale += 0.05;
 							int x, y;
 							SDL_GetMouseState(&x, &y);
-							panx += (WIDTH/2 - x) / 20;
-							pany += (HEIGHT / 2 - y) / 20;
+							GV::panx += (WIDTH/2 - x) / 20;
+							GV::pany += (HEIGHT / 2 - y) / 20;
 						}
 						else {
-							panx -= 50;
+							GV::panx -= 50;
 						}
 					}
 					else {
 						if (zoom == 1) {
-							scale -= 0.05;
+							GV::scale -= 0.05;
 							int x, y;
 							SDL_GetMouseState(&x, &y);
-							panx += (WIDTH / 2 - x) / 20;
-							pany += (HEIGHT / 2 - y) / 20;
+							GV::panx += (WIDTH / 2 - x) / 20;
+							GV::pany += (HEIGHT / 2 - y) / 20;
 						}
 						else {
-							panx += 50;
+							GV::panx += 50;
 						}
 					}
 				}
@@ -180,8 +181,8 @@ public:
 				case SDL_MOUSEMOTION: {
 
 					if (drag == 1) {
-						panx += 0.4 * e.motion.xrel;
-						pany += 0.4 * e.motion.yrel;
+						GV::panx += 0.4 * e.motion.xrel;
+						GV::pany += 0.4 * e.motion.yrel;
 					}
 				
 				}
@@ -194,14 +195,14 @@ public:
 				// render grid
 				SDL_SetRenderDrawColor(r, 100, 100, 100, 255);
 				SDL_RenderSetScale(r, 1, 1);
-				for (uint32_t i = 0; i < WIDTH; i += scale * 10) {
+				for (uint32_t i = 0; i < WIDTH; i += GV::scale * 10) {
 					SDL_RenderDrawLine(r, i, 0, i, HEIGHT);
 				}
-				for (uint32_t i = 0; i < HEIGHT; i += scale * 10) {
+				for (uint32_t i = 0; i < HEIGHT; i += GV::scale * 10) {
 					SDL_RenderDrawLine(r, 0, i, WIDTH, i);
 				}
 			}
-			SDL_RenderSetScale(r, scale, scale);
+			SDL_RenderSetScale(r, GV::scale, GV::scale);
 			Render();
 
 			SDL_RenderPresent(r);
@@ -215,6 +216,9 @@ public:
 
 	Application(const std::string&& title, std::string&& quote) : title(title), quit(false) {
 		Log("Application starting", 0);
+
+		GV::scale = 1;
+
 		InitData(std::forward<std::string>(quote));
 		SDL_Init(SDL_INIT_VIDEO);
 		w = SDL_CreateWindow(title.c_str(), SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, WIDTH, HEIGHT, SDL_RENDERER_ACCELERATED);
