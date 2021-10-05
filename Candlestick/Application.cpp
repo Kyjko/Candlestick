@@ -9,10 +9,25 @@
 #include <unordered_map>
 #include "GV.h"
 
+////////////////////
+#define BORDERLESS
+#define FULLSCREEN
+////////////////////
+
 #define WIDTH 1920
 #define HEIGHT 1080
 
 #define VERBOSE 1
+
+#ifdef BORDERLESS
+#define SDL_WINDOWPOS_UNDEFINED 0
+#define SDL_WINDOWPOS_CENTERED 0
+#endif
+
+#ifdef FULLSCREEN
+#define WIDTH 2560
+#define HEIGHT 1440
+#endif
 
 struct Candlestick {
 	double high, low, open, close;
